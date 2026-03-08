@@ -142,6 +142,8 @@ class MLPClassifierDeepResidual(nn.Module):
         h: int = 64,
         w: int = 64,
         num_classes: int = 6,
+        hidden_dim: int = 128,
+        num_layers: int = 4,
     ):
         """
         Args:
@@ -155,7 +157,14 @@ class MLPClassifierDeepResidual(nn.Module):
         """
         super().__init__()
 
-        raise NotImplementedError("MLPClassifierDeepResidual.__init__() is not implemented")
+        input_dim = 3 * h * w
+
+        self.input_layer = nn.Linear(input_dim, hidden_dim)
+        self.hidden_layers = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(num_layers - 1)]
+        )
+        self.output_layer = nn.Linear(hidden_dim, num_classes)
+        self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -165,7 +174,15 @@ class MLPClassifierDeepResidual(nn.Module):
         Returns:
             tensor (b, num_classes) logits
         """
-        raise NotImplementedError("MLPClassifierDeepResidual.forward() is not implemented")
+        x = x.view(x.size(0), -1)
+        x = self.relu(self.input_layer(x))
+
+        for layer in self.hidden_layers:
+            residual = x
+            x = self.relu(layer(x))
+            x = x + residual
+
+        return self.output_layer(x)
 
 
 model_factory = {
