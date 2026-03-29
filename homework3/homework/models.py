@@ -99,45 +99,30 @@ class Detector(torch.nn.Module):
         self.register_buffer("input_mean", torch.as_tensor(INPUT_MEAN))
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
 
+        def conv_block(in_ch, out_ch):
+            return nn.Sequential(
+                nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
+                nn.BatchNorm2d(out_ch),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
+                nn.BatchNorm2d(out_ch),
+                nn.ReLU(inplace=True),
+            )
+
         # TODO: implement
-        self.encoder1 = nn.Sequential(
-            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-        )
+        self.encoder1 = conv_block(in_channels, 32)
         self.pool1 = nn.MaxPool2d(kernel_size=2)
 
-        self.encoder2 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-        )
+        self.encoder2 = conv_block(32, 64)
         self.pool2 = nn.MaxPool2d(kernel_size=2)
 
-        self.bottleneck = nn.Sequential(
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(128, 128, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-        )
+        self.bottleneck = conv_block(64, 128)
 
         self.up1 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
-        self.decoder1 = nn.Sequential(
-            nn.Conv2d(64 + 64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-        )
+        self.decoder1 = conv_block(64 + 64, 64)
 
         self.up2 = nn.ConvTranspose2d(64, 32, kernel_size=2, stride=2)
-        self.decoder2 = nn.Sequential(
-            nn.Conv2d(32 + 32, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(32, 32, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-        )
+        self.decoder2 = conv_block(32 + 32, 32)
 
         self.segmentation_head = nn.Conv2d(32, num_classes, kernel_size=1)
         self.depth_head = nn.Conv2d(32, 1, kernel_size=1)
