@@ -35,7 +35,7 @@ def train(
 
     train_data = load_data(
         "drive_data/train",
-        transform_pipeline="default",
+        transform_pipeline="aug",
         shuffle=True,
         batch_size=batch_size,
         num_workers=2,
@@ -49,7 +49,7 @@ def train(
         num_workers=2,
     )
 
-    seg_loss_fn = nn.CrossEntropyLoss()
+    seg_loss_fn = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 4.0, 4.0], device=device))
     depth_loss_fn = nn.L1Loss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -69,7 +69,8 @@ def train(
 
             optimizer.zero_grad()
 
-            logits, depth_pred = model(img)
+            logits, depth_pred_raw = model(img)
+            depth_pred = torch.sigmoid(depth_pred_raw)
 
             seg_loss = seg_loss_fn(logits, track)
             depth_loss = depth_loss_fn(depth_pred, depth)
@@ -96,7 +97,8 @@ def train(
                 track = torch.tensor(batch["track"]).long().to(device)
                 depth = torch.tensor(batch["depth"]).to(device)
 
-                logits, depth_pred = model(img)
+                logits, depth_pred_raw = model(img)
+                depth_pred = torch.sigmoid(depth_pred_raw)
 
                 preds = logits.argmax(dim=1)
                 val_metric.add(preds.cpu(), track.cpu(), depth_pred.cpu(), depth.cpu())
@@ -124,7 +126,7 @@ def train(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--num_epoch", type=int, default=20)
+    parser.add_argument("--num_epoch", type=int, default=40)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=32)
 
