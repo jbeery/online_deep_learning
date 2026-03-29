@@ -27,7 +27,28 @@ class Classifier(nn.Module):
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
 
         # TODO: implement
-        pass
+        self.features = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2),
+
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+
+        self.classifier = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1, 1)),
+            nn.Flatten(),
+            nn.Linear(128, num_classes),
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -41,7 +62,7 @@ class Classifier(nn.Module):
         z = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
 
         # TODO: replace with actual forward pass
-        logits = torch.randn(x.size(0), 6)
+        logits = self.classifier(self.features(z))
 
         return logits
 
@@ -79,7 +100,47 @@ class Detector(torch.nn.Module):
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD))
 
         # TODO: implement
-        pass
+        self.encoder1 = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+        self.pool1 = nn.MaxPool2d(kernel_size=2)
+
+        self.encoder2 = nn.Sequential(
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+        self.pool2 = nn.MaxPool2d(kernel_size=2)
+
+        self.bottleneck = nn.Sequential(
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+
+        self.up1 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
+        self.decoder1 = nn.Sequential(
+            nn.Conv2d(64 + 64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+
+        self.up2 = nn.ConvTranspose2d(64, 32, kernel_size=2, stride=2)
+        self.decoder2 = nn.Sequential(
+            nn.Conv2d(32 + 32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+        )
+
+        self.segmentation_head = nn.Conv2d(32, num_classes, kernel_size=1)
+        self.depth_head = nn.Conv2d(32, 1, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -98,8 +159,22 @@ class Detector(torch.nn.Module):
         z = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
 
         # TODO: replace with actual forward pass
-        logits = torch.randn(x.size(0), 3, x.size(2), x.size(3))
-        raw_depth = torch.rand(x.size(0), x.size(2), x.size(3))
+        e1 = self.encoder1(z)
+        p1 = self.pool1(e1)
+
+        e2 = self.encoder2(p1)
+        p2 = self.pool2(e2)
+
+        b = self.bottleneck(p2)
+
+        u1 = self.up1(b)
+        d1 = self.decoder1(torch.cat([u1, e2], dim=1))
+
+        u2 = self.up2(d1)
+        d2 = self.decoder2(torch.cat([u2, e1], dim=1))
+
+        logits = self.segmentation_head(d2)
+        raw_depth = self.depth_head(d2).squeeze(1)
 
         return logits, raw_depth
 
@@ -120,7 +195,7 @@ class Detector(torch.nn.Module):
         pred = logits.argmax(dim=1)
 
         # Optional additional post-processing for depth only if needed
-        depth = raw_depth
+        depth = torch.sigmoid(raw_depth)
 
         return pred, depth
 
