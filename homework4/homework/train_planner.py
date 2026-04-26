@@ -103,3 +103,21 @@ def train(
         model.load_state_dict(best_state_dict)
 
     save_model(model)
+
+def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--model_name", type=str, default="mlp_planner")
+    parser.add_argument("--train_path", type=str, default="drive_data/train")
+    parser.add_argument("--val_path", type=str, default="drive_data/val")
+    parser.add_argument("--num_epochs", type=int, default=30)
+    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
+
+    args = parser.parse_args()
+
+    train(**vars(args))
+
+
+if __name__ == "__main__":
+    main()
