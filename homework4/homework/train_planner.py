@@ -44,6 +44,9 @@ def train(
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     loss_fn = nn.SmoothL1Loss(reduction="none")
 
+    best_val_score = float("inf")
+    best_state_dict = None
+
     for epoch in range(num_epochs):
         model.train()
 
@@ -79,6 +82,14 @@ def train(
         train_results = train_metric.compute()
         val_results = val_metric.compute()
 
+        val_score = val_results["longitudinal_error"] + val_results["lateral_error"]
+
+        if val_score < best_val_score:
+            best_val_score = val_score
+            best_state_dict = {
+                k: v.detach().cpu().clone() for k, v in model.state_dict().items()
+            }
+
         print(
             f"epoch {epoch + 1:02d} / {num_epochs:02d} "
             f"loss={train_loss / len(train_data):.4f} "
@@ -88,23 +99,7 @@ def train(
             f"val_lat={val_results['lateral_error']:.4f}"
         )
 
+    if best_state_dict is not None:
+        model.load_state_dict(best_state_dict)
+
     save_model(model)
-
-
-def main():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--model_name", type=str, default="mlp_planner")
-    parser.add_argument("--train_path", type=str, default="drive_data/train")
-    parser.add_argument("--val_path", type=str, default="drive_data/val")
-    parser.add_argument("--num_epochs", type=int, default=30)
-    parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--learning_rate", type=float, default=1e-3)
-
-    args = parser.parse_args()
-
-    train(**vars(args))
-
-
-if __name__ == "__main__":
-    main()
