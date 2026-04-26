@@ -76,6 +76,7 @@ class TransformerPlanner(nn.Module):
         self.query_embed = nn.Embedding(n_waypoints, d_model)
         self.track_embed = nn.Linear(2, d_model)
         self.side_embed = nn.Embedding(2, d_model)
+        self.position_embed = nn.Embedding(2 * n_track, d_model)
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
@@ -126,7 +127,10 @@ class TransformerPlanner(nn.Module):
             ],
             dim=0,
         )
+        position_ids = torch.arange(2 * self.n_track, device=track_left.device)
+
         track = track + self.side_embed(side_ids)[None, :, :]
+        track = track + self.position_embed(position_ids)[None, :, :]
 
         memory = self.encoder(track)
 
@@ -150,6 +154,33 @@ class CNNPlanner(torch.nn.Module):
         self.register_buffer("input_mean", torch.as_tensor(INPUT_MEAN), persistent=False)
         self.register_buffer("input_std", torch.as_tensor(INPUT_STD), persistent=False)
 
+        self.backbone = nn.Sequential(
+            nn.Conv2d(3, 32, kernel_size=5, stride=2, padding=2),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+
+            nn.AdaptiveAvgPool2d((1, 1)),
+        )
+
+        self.head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, n_waypoints * 2),
+        )
+
     def forward(self, image: torch.Tensor, **kwargs) -> torch.Tensor:
         """
         Args:
@@ -161,7 +192,10 @@ class CNNPlanner(torch.nn.Module):
         x = image
         x = (x - self.input_mean[None, :, None, None]) / self.input_std[None, :, None, None]
 
-        raise NotImplementedError
+        x = self.backbone(x)
+        x = self.head(x)
+
+        return x.view(-1, self.n_waypoints, 2)
 
 
 MODEL_FACTORY = {
