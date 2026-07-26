@@ -12,27 +12,35 @@ class CoTModel(BaseLLM):
             {
                 "role": "system",
                 "content": (
-                    "You are a unit conversion assistant. Be concise. "
-                    "Compute the answer step by step. "
-                    "Always finish with the final number inside <answer></answer>. "
-                    "Do not include units inside the answer tag."
+                    "You are a precise unit conversion assistant. "
+                    "Answer every question with a short calculation. "
+                    "You must always end with exactly one final numeric answer inside "
+                    "<answer></answer>. Do not put units inside the answer tag."
                 ),
             },
             {
                 "role": "user",
-                "content": "How many centimeter are there in 3 meter?",
+                "content": "How many centimeter are there in 2 meter?",
             },
             {
                 "role": "assistant",
-                "content": "1 meter = 100 centimeter. 3 * 100 = <answer>300</answer>",
+                "content": "1 meter = 100 centimeter. 2 * 100 = <answer>200</answer>",
             },
             {
                 "role": "user",
-                "content": "How many meter are there in 250 centimeter?",
+                "content": "How many meter are there in 300 centimeter?",
             },
             {
                 "role": "assistant",
-                "content": "1 meter = 100 centimeter. 250 / 100 = <answer>2.5</answer>",
+                "content": "1 meter = 100 centimeter. 300 / 100 = <answer>3</answer>",
+            },
+            {
+                "role": "user",
+                "content": "How many gram are there per 6 kg?",
+            },
+            {
+                "role": "assistant",
+                "content": "1 kg = 1000 gram. 6 * 1000 = <answer>6000</answer>",
             },
             {
                 "role": "user",
