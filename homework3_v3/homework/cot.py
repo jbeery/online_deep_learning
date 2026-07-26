@@ -12,10 +12,13 @@ class CoTModel(BaseLLM):
             {
                 "role": "system",
                 "content": (
-                    "You are a precise unit conversion assistant. "
-                    "Answer every question with a short calculation. "
-                    "You must always end with exactly one final numeric answer inside "
-                    "<answer></answer>. Do not put units inside the answer tag."
+                    "You are a precise unit conversion assistant. Be concise. "
+                    "Use these conversion facts when helpful: "
+                    "1 km = 1000 meter. 1 meter = 100 centimeter. "
+                    "1 kg = 1000 gram. 1 hour = 60 minute. 1 minute = 60 second. "
+                    "1 foot = 12 inch. 1 yard = 3 foot. 1 mile = 5280 foot. "
+                    "Always end with exactly one final numeric answer inside <answer></answer>. "
+                    "Do not put units inside the answer tag."
                 ),
             },
             {
@@ -36,11 +39,19 @@ class CoTModel(BaseLLM):
             },
             {
                 "role": "user",
-                "content": "How many gram are there per 6 kg?",
+                "content": "How many minute are there in 2 hour?",
             },
             {
                 "role": "assistant",
-                "content": "1 kg = 1000 gram. 6 * 1000 = <answer>6000</answer>",
+                "content": "1 hour = 60 minute. 2 * 60 = <answer>120</answer>",
+            },
+            {
+                "role": "user",
+                "content": "How many foot are there in 4 yard?",
+            },
+            {
+                "role": "assistant",
+                "content": "1 yard = 3 foot. 4 * 3 = <answer>12</answer>",
             },
             {
                 "role": "user",
