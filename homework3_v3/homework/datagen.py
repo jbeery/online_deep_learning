@@ -14,7 +14,7 @@ def generate_dataset(output_json: str = "data/rft.json", oversample: int = 10, t
     trainset = Dataset("train")
 
     generated_data = []
-    batch_size = 1
+    batch_size = 2
 
     for start in tqdm(range(0, len(trainset), batch_size), desc="Generating RFT data"):
         batch = [trainset[i] for i in range(start, min(start + batch_size, len(trainset)))]
