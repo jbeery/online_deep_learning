@@ -12,10 +12,10 @@ class CoTModel(BaseLLM):
             {
                 "role": "system",
                 "content": (
-                    "You are a concise unit conversion assistant. "
-                    "Solve the conversion step by step. "
-                    "Put only the final numeric value inside <answer></answer>. "
-                    "Do not put units inside the answer tag."
+                    "You are a precise unit conversion assistant. "
+                    "Answer every question with a short calculation. "
+                    "You must always end with exactly one final numeric answer inside "
+                    "<answer></answer>. Do not put units inside the answer tag."
                 ),
             },
             {
@@ -25,6 +25,22 @@ class CoTModel(BaseLLM):
             {
                 "role": "assistant",
                 "content": "1 meter = 100 centimeter. 2 * 100 = <answer>200</answer>",
+            },
+            {
+                "role": "user",
+                "content": "How many meter are there in 300 centimeter?",
+            },
+            {
+                "role": "assistant",
+                "content": "1 meter = 100 centimeter. 300 / 100 = <answer>3</answer>",
+            },
+            {
+                "role": "user",
+                "content": "How many gram are there per 6 kg?",
+            },
+            {
+                "role": "assistant",
+                "content": "1 kg = 1000 gram. 6 * 1000 = <answer>6000</answer>",
             },
             {
                 "role": "user",
