@@ -109,13 +109,14 @@ def train_model(
         output_dir=output_dir,
         logging_dir=output_dir,
         report_to="tensorboard",
-        learning_rate=5e-4,
+        learning_rate=2e-4,
         num_train_epochs=5,
-        per_device_train_batch_size=32,
+        per_device_train_batch_size=16,
         gradient_checkpointing=True,
-        fp16=torch.cuda.is_available(),
+        fp16=False,
         save_strategy="no",
         logging_steps=10,
+        max_grad_norm=1.0,
         **kwargs,
     )
 
