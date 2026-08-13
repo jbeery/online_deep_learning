@@ -309,14 +309,14 @@ def generate_qa_pairs(info_path: str, view_index: int, img_width: int = 150, img
     left_count = 0
     right_count = 0
     front_count = 0
-    behind_count = 0
+    back_count = 0
 
     for kart in other_karts:
-        left_right, front_behind, position = _relative_position(kart, ego)
+        left_right, front_back, position = _relative_position(kart, ego)
         left_count += left_right == "left"
         right_count += left_right == "right"
-        front_count += front_behind == "front"
-        behind_count += front_behind == "back"
+        front_count += front_back == "front"
+        back_count += front_back == "back"
 
         qa_pairs.append(
             {
@@ -327,7 +327,7 @@ def generate_qa_pairs(info_path: str, view_index: int, img_width: int = 150, img
         qa_pairs.append(
             {
                 "question": f"Is {kart['kart_name']} in front of or behind the ego car?",
-                "answer": front_behind,
+                "answer": front_back,
             }
         )
         qa_pairs.append(
@@ -340,7 +340,7 @@ def generate_qa_pairs(info_path: str, view_index: int, img_width: int = 150, img
     qa_pairs.append({"question": "How many karts are to the left of the ego car?", "answer": str(left_count)})
     qa_pairs.append({"question": "How many karts are to the right of the ego car?", "answer": str(right_count)})
     qa_pairs.append({"question": "How many karts are in front of the ego car?", "answer": str(front_count)})
-    qa_pairs.append({"question": "How many karts are behind the ego car?", "answer": str(behind_count)})
+    qa_pairs.append({"question": "How many karts are behind the ego car?", "answer": str(back_count)})
 
     return qa_pairs
 
@@ -429,3 +429,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
