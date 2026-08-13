@@ -108,13 +108,26 @@ class BaseVLM:
         )
 
         # Extract only the assistant's answer
+        def normalize_answer(answer: str) -> str:
+            answer = answer.strip().lower().split("\n")[0]
+            answer = answer.strip(" .,:;")
+
+            # Normalize position wording to match the grader labels.
+            answer = answer.replace("behind", "back")
+            answer = answer.replace("front left", "front and left")
+            answer = answer.replace("front right", "front and right")
+            answer = answer.replace("back left", "back and left")
+            answer = answer.replace("back right", "back and right")
+
+            return answer.strip()
+
         cleaned_texts = []
         for text in generated_texts:
             # Find the last occurrence of "Assistant:" and take everything after
             if "Assistant:" in text:
-                cleaned_texts.append(text.split("Assistant:")[-1].strip())
+                cleaned_texts.append(normalize_answer(text.split("Assistant:")[-1]))
             else:
-                cleaned_texts.append(text.strip())
+                cleaned_texts.append(normalize_answer(text))
 
         # Handle multiple return sequences
         if num_return_sequences is not None:
