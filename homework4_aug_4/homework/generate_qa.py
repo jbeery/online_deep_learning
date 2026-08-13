@@ -152,8 +152,8 @@ def _relative_position(kart: dict, ego: dict) -> tuple[str, str, str]:
     kart_x, kart_y = kart["center"]
     ego_x, ego_y = ego["center"]
     left_right = "left" if kart_x < ego_x else "right"
-    front_behind = "front" if kart_y < ego_y else "behind"
-    return left_right, front_behind, f"{front_behind} {left_right}"
+    front_back = "front" if kart_y < ego_y else "back"
+    return left_right, front_back, f"{front_back} and {left_right}"
 
 
 def extract_kart_objects(
@@ -316,7 +316,7 @@ def generate_qa_pairs(info_path: str, view_index: int, img_width: int = 150, img
         left_count += left_right == "left"
         right_count += left_right == "right"
         front_count += front_behind == "front"
-        behind_count += front_behind == "behind"
+        behind_count += front_behind == "back"
 
         qa_pairs.append(
             {
